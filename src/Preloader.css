@@ -1,0 +1,18 @@
+.preloader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #D1D1D1;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+  }
+  
+  .preloader img {
+    width: 500px;
+    height: 500px;
+  }
+  

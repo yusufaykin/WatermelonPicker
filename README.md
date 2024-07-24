@@ -1,70 +1,59 @@
-# Getting Started with Create React App
+# Watermelon Picker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Description
 
-## Available Scripts
+This project is a web application developed to automate the process of selecting watermelons. The application is built with React and enriched with various technologies.
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+- **GPT-4o API Integration:** Selects watermelons using the GPT-4o API key.
+- **TensorFlow and Canvas Usage:** Using TensorFlow and Canvas, it identifies and marks the watermelon in the photo according to the response from the API..
+- **Web Speech API:** Provides the response audibly.
+- **Photo Analysis:** Can analyze photos uploaded from the computer.
+- **Camera Photo Capture:** Can open the camera, take a photo, and analyze it.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Links
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- [Github Repo](https://github.com/yusufaykin/WatermelonPicker)
 
-### `npm test`
+## Technologies Used
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- React
+- Axios
+- GPT-4 API
+- TensorFlow
+- Canvas API
+- Web Speech API
 
-### `npm run build`
+## Requirements
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Web browser (Google Chrome, Mozilla Firefox, etc.)
+- Node.js
+- npm (Node Package Manager)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Gif
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+<img src="/watermelon.gif">
 
-### `npm run eject`
+## Installation
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+To run this project locally, follow these steps:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. Clone this repo: `git clone https://github.com/yusufaykin/WatermelonPicker.git`
+2. Navigate to the project folder: `cd WatermelonPicker`
+3. Install the necessary dependencies: `npm install`
+4. Start the project: `npm run start`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Contributing
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+We welcome contributions of any kind! If you'd like to contribute to the project, please follow these steps:
 
-## Learn More
+1. Fork this repo: `https://github.com/yusufaykin/WatermelonPicker/fork`
+2. Create a new branch: `git checkout -b new-feature`
+3. Make your changes and commit them: `git commit -am 'Add new feature'`
+4. Push your branch: `git push origin new-feature`
+5. Submit a Pull Request
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Contact
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+If you have any questions or suggestions, please feel free to contact me via email: [aykinyusuf1@gmail.com]
