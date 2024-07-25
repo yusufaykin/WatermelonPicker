@@ -10,9 +10,15 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [showPreloader, setShowPreloader] = useState(true);
   const [useCamera, setUseCamera] = useState(false);
+  const [stream, setStream] = useState(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
+
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+  };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -26,42 +32,74 @@ const App = () => {
     }
   };
 
-  const handleUseCamera = () => {
+  const handleUseCamera = async () => {
     setUseCamera(true);
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      })
-      .catch((err) => {
-        console.error("Error accessing camera: ", err);
-      });
+    setSelectedFile(null);
+    setPreviewUrl(null);
+
+    try {
+      const constraints = {
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: window.innerWidth },
+          height: { ideal: window.innerHeight }
+        }
+      };
+
+      const videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+      setStream(videoStream);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = videoStream;
+        await videoRef.current.play();
+      }
+    } catch (err) {
+      console.error("Error accessing camera: ", err);
+      alert("Kameraya erişilemedi. Lütfen kamera izinlerini kontrol edin.");
+    }
+  };
+
+  const handleCloseCamera = () => {
+    setUseCamera(false);
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setStream(null);
   };
 
   const handleCapture = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const context = canvas.getContext("2d");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob) => {
+    if (!videoRef.current) {
+      console.error("Video reference is not defined.");
+      return;
+    }
+    if (!canvasRef.current) {
+      console.error("Canvas reference is not defined.");
+      return;
+    }
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+      if (blob) {
         const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
         setSelectedFile(file);
         const reader = new FileReader();
         reader.onloadend = () => {
           setPreviewUrl(reader.result);
-          handleImageLoad(); 
         };
         reader.readAsDataURL(file);
-      }, "image/jpeg");
-      setUseCamera(false);
-      video.srcObject.getTracks().forEach((track) => track.stop());
-    } else {
-      console.error("Canvas or video reference is not defined.");
-    }
+      } else {
+        console.error("Failed to create blob from canvas");
+      }
+    }, "image/jpeg");
+
+    handleCloseCamera();
   };
 
   const handleSubmit = async () => {
@@ -76,6 +114,10 @@ const App = () => {
     reader.readAsDataURL(selectedFile);
     reader.onloadend = async () => {
       const base64Image = reader.result.split(",")[1];
+
+      const img = new Image();
+      img.src = reader.result;
+      await new Promise(resolve => img.onload = resolve);
 
       try {
         const result = await axios.post(
@@ -94,22 +136,23 @@ const App = () => {
                   },
                   {
                     type: "text",
-                    text: `Fotoğraftaki en iyi karpuzu seç ve konumunu belirt. 
+                    text: `Fotoğraftaki en iyi karpuzu seç ve konumunu belirt. Görüntü boyutları: ${img.naturalWidth}x${img.naturalHeight}
 
-                              Önemli kurallar:
-                              1. Görüntünün sol üst köşesi (0,0) kabul edilecek.
-                              2. Koordinatları 'x,y' formatında ve tam sayı olarak ver (örnek: '150,200').
-                              3. Koordinatlar, görüntü boyutları içinde olmalıdır.
-                              4. Koordinatları karpuzun merkezinde ver,köşesinde olmasın.
-                              5. Nesnel ol. Aynı fotoğraf için farklı cevapler verme.
-                              
+                    Önemli kurallar:
+                    1. Görüntünün sol üst köşesi (0,0) kabul edilecek.
+                    2. Koordinatları 'x,y' formatında ve tam sayı olarak ver (örnek: '150,200').
+                    3. Koordinatlar, görüntünün orijinal boyutlarına göre (${img.naturalWidth}x${img.naturalHeight}) verilmelidir.
+                    4. Koordinatları karpuzun merkezinde ver, köşesinde olmasın.
+                    5. Nesnel ol. Aynı fotoğraf için her zaman aynı karpuzu seç.
+                    6. En iyi karpuzu seçerken şekil, renk ve parlaklık gibi faktörleri göz önünde bulundur.
+                    7. Seçtiğin karpuz hakkında güzel yorumlar yap ve esprisel olarak yaklaş al pişman olmazsın vb.
 
-                              Yanıtını şu formatta ver:
-                              Karpuzun Koordinatları: [X,Y]
-                              Açıklama: [Karpuzun kalitesi hakkında kısa bir yorum]
+                    Yanıtını şu formatta ver:
+                    Karpuzun Koordinatları: [X,Y]
+                    Açıklama: [Karpuzun kalitesi hakkında kısa bir yorum]
 
-
-                              Eğer fotoğrafta karpuz yoksa, 'Görsel de karpuz bulunamadı lütfen karpuz içeren bir fotoğraf ekleyiniz.' yaz.`,
+                    Eğer fotoğrafta karpuz yoksa, 'Görsel de karpuz bulunamadı lütfen karpuz içeren bir fotoğraf ekleyiniz.' yaz.
+                    Eğer Kavun varsa herhangi bir seçim yapma ve  'Bunun kavun olacağını anlayacak kadar zekiyim' yanıtını ver.`,
                   },
                 ],
               },
@@ -118,7 +161,7 @@ const App = () => {
           },
           {
             headers: {
-              Authorization: `Bearer YOUR API KEY`,
+              Authorization: `Bearer YOUR_APİ_KEY`,
               "Content-Type": "application/json",
             },
           }
@@ -144,37 +187,45 @@ const App = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const img = imageRef.current;
-  
+
     if (canvas && ctx && img) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  
+
       const coords = response.match(/(\d+)\s*,\s*(\d+)/);
       if (coords) {
         let x = parseInt(coords[1]);
         let y = parseInt(coords[2]);
-  
-        x = Math.min(Math.max(x, 0), img.naturalWidth);
-        y = Math.min(Math.max(y, 0), img.naturalHeight);
-  
-        const scaleX = canvas.width / img.naturalWidth;
-        const scaleY = canvas.height / img.naturalHeight;
-  
+
+        const imgWidth = img.naturalWidth;
+        const imgHeight = img.naturalHeight;
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+
+        const scaleX = canvasWidth / imgWidth;
+        const scaleY = canvasHeight / imgHeight;
+
         const scaledX = x * scaleX;
         const scaledY = y * scaleY;
-  
+
         ctx.beginPath();
         ctx.arc(scaledX, scaledY, 20, 0, 2 * Math.PI);
         ctx.strokeStyle = "red";
         ctx.lineWidth = 3;
         ctx.stroke();
-  
+
         ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
         ctx.fill();
-  
+
         ctx.beginPath();
         ctx.arc(scaledX, scaledY, 3, 0, 2 * Math.PI);
         ctx.fillStyle = "black";
         ctx.fill();
+
+        console.log(`Orijinal koordinatlar: (${x}, ${y})`);
+        console.log(`Ölçeklendirilmiş koordinatlar: (${scaledX}, ${scaledY})`);
+        console.log(`Görüntü boyutları: ${imgWidth}x${imgHeight}`);
+        console.log(`Canvas boyutları: ${canvasWidth}x${canvasHeight}`);
       } else {
         console.error("Koordinatlar bulunamadı veya geçersiz format.");
       }
@@ -196,38 +247,21 @@ const App = () => {
   const handleImageLoad = () => {
     const img = imageRef.current;
     const canvas = canvasRef.current;
-    const maxWidth = 800; 
-    const maxHeight = 600; 
-    let { width, height } = img;
-
-    if (width > height) {
-      if (width > maxWidth) {
-        height *= maxWidth / width;
-        width = maxWidth;
-      }
-    } else {
-      if (height > maxHeight) {
-        width *= maxHeight / height;
-        height = maxHeight;
-      }
+    if (img && canvas) {
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     }
-
-    canvas.width = width;
-    canvas.height = height;
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0, width, height);
   };
 
   useEffect(() => {
     return () => {
-      if (videoRef.current) {
-        videoRef.current.srcObject
-          ?.getTracks()
-          .forEach((track) => track.stop());
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [stream]);
 
   if (showPreloader) {
     return <Preloader onAnimationEnd={handleAnimationEnd} />;
@@ -240,18 +274,18 @@ const App = () => {
       </header>
       <main>
         <div className="upload-section">
+        <button className="button file-button" onClick={() => document.getElementById('file-input').click()}>
+            Karpuz Seç
+          </button>
           <input
             type="file"
+            id="file-input"
             onChange={handleFileChange}
             accept="image/*"
-            id="file-input"
-            className="file-input"
+            style={{ display: "none" }}
           />
-          <label htmlFor="file-input" className="button file-label">
-            Karpuz Seç
-          </label>
           <button onClick={handleUseCamera} className="button camera-button">
-            Kamera ile Çek
+            Karpuz Çek
           </button>
           <button onClick={handleSubmit} className="button analyze-button">
             Analiz Et
@@ -259,27 +293,43 @@ const App = () => {
         </div>
         {useCamera && (
           <div className="camera-section">
-            <video ref={videoRef} className="camera-view"></video>
-            <button onClick={handleCapture} className="button capture-button">
-              Fotoğraf Çek
-            </button>
+            <video ref={videoRef} className="camera-view" playsInline></video>
+            <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
+            <div className="camera-controls">
+              <button onClick={handleCapture} className="capture-button" aria-label="Fotoğraf Çek"></button>
+              <button onClick={handleCloseCamera} className="close-camera-button">Kapat</button>
+            </div>
           </div>
         )}
         {previewUrl && (
-          <div className="image-preview">
-            <img
-              ref={imageRef}
-              src={previewUrl}
-              alt="Seçilen ürün"
-              style={{ display: "none" }}
-              onLoad={handleImageLoad}
-            />
-            <canvas
-              ref={canvasRef}
-              style={{ maxWidth: "100%", height: "auto" }}
-            />
-          </div>
-        )}
+        <div 
+          className={`image-preview ${isFullScreen ? 'fullscreen' : ''}`}
+          onClick={toggleFullScreen}
+        >
+          <img
+            ref={imageRef}
+            src={previewUrl}
+            alt="Seçilen ürün"
+            style={{ display: "none" }}
+            onLoad={handleImageLoad}
+          />
+          <canvas
+            ref={canvasRef}
+            style={{ maxWidth: "100%", height: "auto" }}
+          />
+          {isFullScreen && (
+            <button 
+              className="close-fullscreen"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFullScreen();
+              }}
+            >
+              &times;
+            </button>
+          )}
+        </div>
+      )}
         <div className="response-section">
           <h2>Analiz Sonucu</h2>
           {loading ? (
